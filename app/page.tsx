@@ -17,11 +17,11 @@ export default function Home() {
             <b>Create NFT</b>
             <small>Mint a 1-of-1 NFT</small>
           </Link>
-          <div className="tile off" style={{ background: "#ffe3ef" }}>
+          <Link href="/collection" className="tile" style={{ background: "#ffe3ef" }}>
             <div className="ico">N</div>
             <b>Launch collection</b>
-            <small>Coming soon</small>
-          </div>
+            <small>Each image = one NFT</small>
+          </Link>
           <div className="tile off" style={{ background: "#e3fbf3" }}>
             <div className="ico">$</div>
             <b>Market</b>
