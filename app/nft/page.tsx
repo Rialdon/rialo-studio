@@ -21,7 +21,30 @@ export default function CreateNft() {
   const [error, setError] = useState("");
   const [mintAddr, setMintAddr] = useState("");
 
+  const [uploading, setUploading] = useState(false);
+
   const add = (m: string) => setLog((l) => [...l, m]);
+
+  async function pick(e: any) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError("");
+    if (!file.type.startsWith("image/")) return setError("File must be an image.");
+    if (file.size > 4 * 1024 * 1024) return setError("Image must be under 4 MB.");
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch("/api/upload", { method: "POST", body: fd });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || "Upload failed");
+      setImage(j.url);
+    } catch (err: any) {
+      setError(String(err?.message || err).slice(0, 300));
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function create() {
     setBusy(true);
@@ -134,7 +157,7 @@ export default function CreateNft() {
           <div className="f"><label>Symbol</label><input className="in" value={symbol} onChange={(e) => setSymbol(e.target.value)} /></div>
         </div>
         <div className="f"><label>Description</label><input className="in" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
-        <div className="f"><label>Image URL</label><input className="in" placeholder="https://..." value={image} onChange={(e) => setImage(e.target.value)} /></div>
+        <div className="f"><label>Image</label><input className="in" type="file" accept="image/*" onChange={pick} />{uploading && <small>Uploading...</small>}</div>
 
         <div className="toggle" onClick={() => setLock((v) => !v)}>
           <span>Lock supply (no more minting)</span>
@@ -156,7 +179,7 @@ export default function CreateNft() {
         {!isConnected ? (
           <button className="btn" onClick={connect}>Connect wallet</button>
         ) : (
-          <button className="btn mint" onClick={create} disabled={busy}>{busy ? "Working..." : "Create NFT"}</button>
+          <button className="btn mint" onClick={create} disabled={busy || uploading}>{busy ? "Working..." : "Create NFT"}</button>
         )}
         <p className="fine">You approve once in your Rialo Wallet. Network fees apply.</p>
 

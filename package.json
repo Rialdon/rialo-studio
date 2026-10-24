@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@rialo/ts-cdk": "^0.18.1",
+    "@vercel/blob": "^2.8.2",
     "@wallet-standard/core": "^1.1.2",
     "next": "^15.4.0",
     "react": "^19.0.0",
