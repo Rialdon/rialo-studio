@@ -17,3 +17,24 @@ export const lstr = (s: string) => {
   const b = new TextEncoder().encode(s);
   return cat(new Uint8Array([b.length]), b);
 };
+
+export const EXPLORER = "https://rialo-explorer-testnet-direct.vercel.app";
+const A58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+export function b58(b: Uint8Array) {
+  let z = 0;
+  while (z < b.length && b[z] === 0) z++;
+  const d: number[] = [];
+  for (let i = z; i < b.length; i++) {
+    let c = b[i];
+    for (let j = 0; j < d.length; j++) { c += d[j] << 8; d[j] = c % 58; c = (c / 58) | 0; }
+    while (c) { d.push(c % 58); c = (c / 58) | 0; }
+  }
+  return "1".repeat(z) + d.reverse().map((x) => A58[x]).join("");
+}
+export function sigOf(res: any): string {
+  try {
+    const s = Array.isArray(res) ? res[0]?.signature : res?.signature;
+    if (typeof s === "string") return s;
+    return b58(Uint8Array.from(Object.values(s) as number[]));
+  } catch { return ""; }
+}

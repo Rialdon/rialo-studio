@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRialoWallet } from "../providers";
 import { loadCdk } from "../../lib/cdk";
+import { EXPLORER, sigOf } from "../../lib/collection";
 import { PROGRAM_ID, KELVIN, u64, cat, lstr } from "../../lib/collection";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -18,6 +19,7 @@ export default function LaunchCollection() {
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [link, setLink] = useState("");
+  const [txSig, setTxSig] = useState("");
 
   const add = (m: string) => setLog((l) => [...l, m]);
 
@@ -26,6 +28,7 @@ export default function LaunchCollection() {
     setLog([]);
     setError("");
     setLink("");
+    setTxSig("");
     try {
       if (!name.trim() || !symbol.trim()) throw new Error("Name and symbol are required.");
       if (new TextEncoder().encode(name.trim()).length > 24) throw new Error("Name max 24 characters.");
@@ -78,7 +81,7 @@ export default function LaunchCollection() {
         .build();
       const bytes: Uint8Array = tx.signAll([]).serialize();
       add("Sending to your wallet...");
-      await signAndSend(bytes);
+      setTxSig(sigOf(await signAndSend(bytes)));
 
       for (let i = 0; i < 12; i++) {
         await sleep(1500);
@@ -127,7 +130,7 @@ export default function LaunchCollection() {
         {error && <div className="err">{error}</div>}
         {link && (
           <div className="ok">
-            Collection created!<br />
+            Collection created!{txSig && <> (<a href={EXPLORER + "/txs/" + txSig} target="_blank" rel="noreferrer">view tx</a>)</>}<br />
             Mint link: <a href={link}>{link}</a>
           </div>
         )}

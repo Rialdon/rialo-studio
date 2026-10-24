@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRialoWallet } from "../providers";
 import { loadCdk } from "../../lib/cdk";
+import { EXPLORER, sigOf } from "../../lib/collection";
 
 const T22 = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 const ATAP = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
@@ -20,6 +21,7 @@ export default function CreateToken() {
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [mintAddr, setMintAddr] = useState("");
+  const [txSig, setTxSig] = useState("");
 
   const add = (m: string) => setLog((l) => [...l, m]);
 
@@ -28,6 +30,7 @@ export default function CreateToken() {
     setLog([]);
     setError("");
     setMintAddr("");
+    setTxSig("");
     try {
       if (!name.trim() || !symbol.trim()) throw new Error("Name and symbol are required.");
       const { cdk, client } = await loadCdk();
@@ -91,7 +94,7 @@ export default function CreateToken() {
       const bytes: Uint8Array = partial.serialize();
       add(`Sending to your wallet (${bytes.length} bytes)...`);
       const res = await signAndSend(bytes);
-      add("Wallet replied: " + JSON.stringify(res, replacer).slice(0, 140));
+      setTxSig(sigOf(res));
 
       for (let i = 0; i < 12; i++) {
         await sleep(1500);
@@ -147,7 +150,7 @@ export default function CreateToken() {
         {error && <div className="err">{error}</div>}
         {mintAddr && (
           <div className="ok">
-            Token created!<br />Mint: {mintAddr}
+            Token created!<br />Mint: {mintAddr}{txSig && <><br /><a href={EXPLORER + "/txs/" + txSig} target="_blank" rel="noreferrer">View transaction</a></>}
           </div>
         )}
         {log.length > 0 && <div className="log">{log.map((l, i) => <div key={i}>{l}</div>)}</div>}

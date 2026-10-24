@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRialoWallet } from "../providers";
 import { loadCdk } from "../../lib/cdk";
+import { EXPLORER, sigOf } from "../../lib/collection";
 import { PROGRAM_ID, T22, ATAP, KELVIN, u64, cat } from "../../lib/collection";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -16,6 +17,7 @@ export default function MintPage() {
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
+  const [txSig, setTxSig] = useState("");
   const [img, setImg] = useState("");
 
   const add = (m: string) => setLog((l) => [...l, m]);
@@ -58,6 +60,7 @@ export default function MintPage() {
     setLog([]);
     setError("");
     setDone("");
+    setTxSig("");
     setImg("");
     try {
       if (!info) throw new Error("Collection not loaded.");
@@ -104,7 +107,7 @@ export default function MintPage() {
       const bytes: Uint8Array = tx.signAll([mint]).serialize();
       add("Sending to your wallet...");
       const res = await signAndSend(bytes);
-      add("Wallet replied: " + JSON.stringify(res, replacer).slice(0, 140));
+      setTxSig(sigOf(res));
 
       for (let i = 0; i < 12; i++) {
         await sleep(1500);
@@ -148,7 +151,7 @@ export default function MintPage() {
         <p className="fine">Price plus network fees apply. You approve once in your Rialo Wallet.</p>
 
         {error && <div className="err">{error}</div>}
-        {done && <div className="ok">NFT minted!<br />Mint: {done}{img && <img src={img} alt="" style={{ display: "block", width: "100%", borderRadius: 12, marginTop: 10 }} />}</div>}
+        {done && <div className="ok">NFT minted!<br />Mint: {done}{txSig && <><br /><a href={EXPLORER + "/txs/" + txSig} target="_blank" rel="noreferrer">View transaction</a></>}{img && <img src={img} alt="" style={{ display: "block", width: "100%", borderRadius: 12, marginTop: 10 }} />}</div>}
         {log.length > 0 && <div className="log">{log.map((l, i) => <div key={i}>{l}</div>)}</div>}
       </div>
     </div>
