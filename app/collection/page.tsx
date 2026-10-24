@@ -2,10 +2,18 @@
 import { useState } from "react";
 import { useRialoWallet } from "../providers";
 import { loadCdk } from "../../lib/cdk";
-import { EXPLORER, sigOf } from "../../lib/collection";
-import { PROGRAM_ID, KELVIN, u64, cat, lstr } from "../../lib/collection";
+import * as L from "../../lib/collection";
+import { BG, TINT } from "../../lib/traits";
 
+const { PROGRAM_ID, KELVIN, u64, cat, lstr } = L;
+const sigOf = (L as any).sigOf as ((r: any) => string) | undefined;
+const EXPLORER = (L as any).EXPLORER as string | undefined;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const pct = (arr: string[], i: number) => {
+  const t = arr.reduce((a, b) => a + Math.max(0, parseFloat(b) || 0), 0);
+  return t > 0 ? ((Math.max(0, parseFloat(arr[i]) || 0) / t) * 100).toFixed(1) : "0";
+};
+const nz = (a: string[]) => a.filter((x) => (parseFloat(x) || 0) > 0).length;
 
 export default function LaunchCollection() {
   const { address, isConnected, connect, signAndSend } = useRialoWallet();
@@ -14,8 +22,14 @@ export default function LaunchCollection() {
   const [desc, setDesc] = useState("");
   const [price, setPrice] = useState("0.1");
   const [perWallet, setPerWallet] = useState("0");
-  const [supply, setSupply] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const [supply, setSupply] = useState("100");
+  const [base, setBase] = useState<File | null>(null);
+  const [bgW, setBgW] = useState<string[]>(BG.map((b) => String(b.weight)));
+  const [tintW, setTintW] = useState<string[]>(TINT.map((t) => String(t.weight)));
+  const [accCat, setAccCat] = useState("Hat");
+  const [accFiles, setAccFiles] = useState<File[]>([]);
+  const [accW, setAccW] = useState<string[]>([]);
+  const [noneW, setNoneW] = useState("50");
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -23,6 +37,18 @@ export default function LaunchCollection() {
   const [txSig, setTxSig] = useState("");
 
   const add = (m: string) => setLog((l) => [...l, m]);
+  const supplyN = Math.min(100000, parseInt(supply, 10) || 0);
+  const accOpts = accW.filter((w) => (parseFloat(w) || 0) > 0).length + ((parseFloat(noneW) || 0) > 0 ? 1 : 0);
+  const combos = nz(bgW) * nz(tintW) * Math.max(1, accOpts);
+
+  async function up(file: File) {
+    const fd = new FormData();
+    fd.append("file", file);
+    const r = await fetch("/api/upload", { method: "POST", body: fd });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || "Upload failed");
+    return j.url as string;
+  }
 
   async function launch() {
     setBusy(true);
@@ -31,52 +57,56 @@ export default function LaunchCollection() {
     setLink("");
     setTxSig("");
     try {
+      const enc = new TextEncoder();
       if (!name.trim() || !symbol.trim()) throw new Error("Name and symbol are required.");
-      if (new TextEncoder().encode(name.trim()).length > 24) throw new Error("Name max 24 characters.");
-      if (new TextEncoder().encode(symbol.trim()).length > 16) throw new Error("Symbol max 16 characters.");
-      if (files.length < 1 || files.length > 50) throw new Error("Pick 1 to 50 images.");
-      const supplyN = Math.min(100000, parseInt(supply, 10) || files.length);
+      if (enc.encode(name.trim()).length > 24) throw new Error("Name max 24 characters.");
+      if (enc.encode(symbol.trim()).length > 16) throw new Error("Symbol max 16 characters.");
+      if (supplyN < 1) throw new Error("Supply must be at least 1.");
+      if (!base) throw new Error("Pick the base image (PNG).");
+      if (base.type !== "image/png" || accFiles.some((f) => f.type !== "image/png")) throw new Error("All images must be PNG.");
+
       const { cdk, client } = await loadCdk();
       const P = (s: string) => cdk.PublicKey.fromString(s);
       const A = (k: any, w: boolean, s = false) => ({ pubkey: k, isSigner: s, isWritable: w });
-      const enc = new TextEncoder();
       const sys = typeof cdk.SYSTEM_PROGRAM_ID === "string" ? P(cdk.SYSTEM_PROGRAM_ID) : cdk.SYSTEM_PROGRAM_ID;
       const owner = P(address!);
       const id = BigInt(Date.now());
+      const [col] = cdk.PublicKey.findProgramAddress([enc.encode("col"), owner.toBytes(), u64(id)], P(PROGRAM_ID));
+      const colS = col.toString();
 
-      const urls: string[] = [];
-      for (let i = 0; i < files.length; i++) {
-        add(`Uploading image ${i + 1}/${files.length}...`);
-        const fd = new FormData();
-        fd.append("file", files[i]);
-        const r = await fetch("/api/upload", { method: "POST", body: fd });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.error || "Upload failed");
-        urls.push(j.url);
+      add("Uploading base image...");
+      const baseUrl = await up(base);
+      const acc: { name: string; url: string; weight: number }[] = [];
+      for (let i = 0; i < accFiles.length; i++) {
+        add(`Uploading ${accCat} ${i + 1}/${accFiles.length}...`);
+        acc.push({ name: accFiles[i].name.replace(/\.[^.]+$/, "").slice(0, 32), url: await up(accFiles[i]), weight: parseFloat(accW[i]) || 0 });
       }
       const cr = await fetch("/api/collection-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: id.toString(), name: name.trim(), symbol: symbol.trim(), description: desc.trim(), images: urls }),
+        body: JSON.stringify({
+          id: colS, name: name.trim(), symbol: symbol.trim(), description: desc.trim(), base: baseUrl,
+          bgW: bgW.map((x) => parseFloat(x) || 0), tintW: tintW.map((x) => parseFloat(x) || 0),
+          accCat: accCat.trim() || "Accessory", acc, noneW: parseFloat(noneW) || 0,
+        }),
       });
       const cj = await cr.json();
       if (!cr.ok) throw new Error(cj.error || "Config failed");
-      const base = `${window.location.origin}/api/meta/${id}/`;
-      if (enc.encode(base).length > 128) throw new Error("Base URI too long.");
-      add("Base URI: " + base);
 
-      const [col] = cdk.PublicKey.findProgramAddress([enc.encode("col"), owner.toBytes(), u64(id)], P(PROGRAM_ID));
+      const baseUri = `${window.location.origin}/api/meta/${colS}/`;
+      if (enc.encode(baseUri).length > 128) throw new Error("Base URI too long.");
+      add("Base URI: " + baseUri);
+
       let lam: any;
       try { lam = await client.getMinimumBalanceForRentExemption(283n); }
       catch { lam = await client.getMinimumBalanceForRentExemption(283); }
       lam = BigInt(lam);
       const priceK = BigInt(Math.round((parseFloat(price) || 0) * KELVIN));
       const perw = BigInt(Math.max(0, parseInt(perWallet, 10) || 0));
-
       const data = cat(
         new Uint8Array([0]),
         u64(id), u64(priceK), u64(BigInt(supplyN)), u64(perw), u64(lam),
-        lstr(name.trim()), lstr(symbol.trim()), lstr(base)
+        lstr(name.trim()), lstr(symbol.trim()), lstr(baseUri)
       );
       const tx = cdk.TransactionBuilder.create()
         .setPayer(owner)
@@ -86,15 +116,16 @@ export default function LaunchCollection() {
         .build();
       const bytes: Uint8Array = tx.signAll([]).serialize();
       add("Sending to your wallet...");
-      setTxSig(sigOf(await signAndSend(bytes)));
+      const res = await signAndSend(bytes);
+      if (sigOf) setTxSig(sigOf(res));
 
       for (let i = 0; i < 12; i++) {
         await sleep(1500);
         try {
           const a = await client.getAccountInfo(col);
           if (a) {
-            setLink(`/mint?c=${col.toString()}&t=${address}`);
-            add("Collection: " + col.toString());
+            setLink(`/mint?c=${colS}&t=${address}`);
+            add("Collection: " + colS);
             return;
           }
         } catch {}
@@ -111,32 +142,86 @@ export default function LaunchCollection() {
     <div className="page">
       <div className="screen">
         <h2>Launch collection</h2>
-        <p className="sub">Images repeat if supply is higher than the image count. Price and limits are enforced on-chain.</p>
+        <p className="sub">Generative NFTs with rarity. Traits stay hidden until each NFT is minted.</p>
 
         <div className="two">
           <div className="f"><label>Name</label><input className="in" value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="f"><label>Symbol</label><input className="in" value={symbol} onChange={(e) => setSymbol(e.target.value)} /></div>
           <div className="f"><label>Price (RIALO)</label><input className="in" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} /></div>
+          <div className="f"><label>Supply</label><input className="in" inputMode="numeric" value={supply} onChange={(e) => setSupply(e.target.value)} /></div>
           <div className="f"><label>Max per wallet (0 = unlimited)</label><input className="in" inputMode="numeric" value={perWallet} onChange={(e) => setPerWallet(e.target.value)} /></div>
         </div>
-        <div className="f"><label>Supply (blank = number of images)</label><input className="in" inputMode="numeric" value={supply} onChange={(e) => setSupply(e.target.value)} /></div>
         <div className="f"><label>Description</label><input className="in" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+
         <div className="f">
-          <label>Images ({files.length} selected)</label>
-          <input className="in" type="file" accept="image/*" multiple onChange={(e) => setFiles(Array.from(e.target.files || []))} />
+          <label>Base image (PNG, transparent)</label>
+          <input className="in" type="file" accept="image/png" onChange={(e) => setBase(e.target.files?.[0] || null)} />
         </div>
+
+        <p className="sub">Background rarity (weight)</p>
+        <div className="two">
+          {BG.map((b, i) => (
+            <div className="f" key={b.name}>
+              <label>{b.name} ({pct(bgW, i)}%)</label>
+              <input className="in" inputMode="decimal" value={bgW[i]} onChange={(e) => setBgW(bgW.map((v, j) => (j === i ? e.target.value : v)))} />
+            </div>
+          ))}
+        </div>
+
+        <p className="sub">Color rarity (weight)</p>
+        <div className="two">
+          {TINT.map((t, i) => (
+            <div className="f" key={t.name}>
+              <label>{t.name} ({pct(tintW, i)}%)</label>
+              <input className="in" inputMode="decimal" value={tintW[i]} onChange={(e) => setTintW(tintW.map((v, j) => (j === i ? e.target.value : v)))} />
+            </div>
+          ))}
+        </div>
+
+        <p className="sub">Optional accessories (PNG, same size as base)</p>
+        <div className="f"><label>Category name</label><input className="in" value={accCat} onChange={(e) => setAccCat(e.target.value)} /></div>
+        <div className="f">
+          <label>{accCat || "Accessory"} images ({accFiles.length} selected)</label>
+          <input
+            className="in" type="file" accept="image/png" multiple
+            onChange={(e) => {
+              const fl = Array.from(e.target.files || []).slice(0, 50);
+              setAccFiles(fl);
+              setAccW(fl.map(() => "10"));
+            }}
+          />
+        </div>
+        <div className="two">
+          {accFiles.map((f, i) => (
+            <div className="f" key={f.name + i}>
+              <label>{f.name.replace(/\.[^.]+$/, "")} ({pct([...accW, noneW].slice(0, accW.length).concat([noneW]), i)}%)</label>
+              <input className="in" inputMode="decimal" value={accW[i]} onChange={(e) => setAccW(accW.map((v, j) => (j === i ? e.target.value : v)))} />
+            </div>
+          ))}
+          <div className="f">
+            <label>No {accCat || "accessory"} ({pct([...accW, noneW], accW.length)}%)</label>
+            <input className="in" inputMode="decimal" value={noneW} onChange={(e) => setNoneW(e.target.value)} />
+          </div>
+        </div>
+
+        <p className="fine">
+          {combos.toLocaleString()} possible combinations
+          {supplyN > combos ? ". Supply is higher than that, so duplicates will happen." : "."}
+        </p>
 
         {!isConnected ? (
           <button className="btn" onClick={connect}>Connect wallet</button>
         ) : (
           <button className="btn mint" onClick={launch} disabled={busy}>{busy ? "Working..." : "Launch collection"}</button>
         )}
-        <p className="fine">Payments go to your wallet. You approve once in your Rialo Wallet.</p>
+        <p className="fine">Launch from the production site (rialo-studio.vercel.app). Payments go to your wallet.</p>
 
         {error && <div className="err">{error}</div>}
         {link && (
           <div className="ok">
-            Collection created!{txSig && <> (<a href={EXPLORER + "/txs/" + txSig} target="_blank" rel="noreferrer">view tx</a>)</>}<br />
+            Collection created!
+            {txSig && EXPLORER && <> (<a href={EXPLORER + "/txs/" + txSig} target="_blank" rel="noreferrer">view tx</a>)</>}
+            <br />
             Mint link: <a href={link}>{link}</a>
           </div>
         )}
