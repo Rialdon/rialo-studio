@@ -12,11 +12,11 @@ export default function Home() {
             <b>Create token</b>
             <small>Name, symbol, supply</small>
           </Link>
-          <div className="tile off" style={{ background: "#e6f7ff" }}>
+          <Link href="/nft" className="tile" style={{ background: "#e6f7ff" }}>
             <div className="ico">1</div>
             <b>Create NFT</b>
-            <small>Coming soon</small>
-          </div>
+            <small>Mint a 1-of-1 NFT</small>
+          </Link>
           <div className="tile off" style={{ background: "#ffe3ef" }}>
             <div className="ico">N</div>
             <b>Launch collection</b>
