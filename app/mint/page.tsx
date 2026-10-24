@@ -16,6 +16,7 @@ export default function MintPage() {
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
+  const [img, setImg] = useState("");
 
   const add = (m: string) => setLog((l) => [...l, m]);
 
@@ -57,6 +58,7 @@ export default function MintPage() {
     setLog([]);
     setError("");
     setDone("");
+    setImg("");
     try {
       if (!info) throw new Error("Collection not loaded.");
       if (!treasury) throw new Error("Missing treasury in the link (&t=...).");
@@ -110,6 +112,7 @@ export default function MintPage() {
           const a = await client.getAccountInfo(mint.publicKey);
           if (a) {
             setDone(mint.publicKey.toString());
+            try { const mj = await (await fetch(info.uri + (Number(info.minted) + 1) + ".json")).json(); setImg(mj.image || ""); } catch {}
             load();
             return;
           }
@@ -145,7 +148,7 @@ export default function MintPage() {
         <p className="fine">Price plus network fees apply. You approve once in your Rialo Wallet.</p>
 
         {error && <div className="err">{error}</div>}
-        {done && <div className="ok">NFT minted!<br />Mint: {done}</div>}
+        {done && <div className="ok">NFT minted!<br />Mint: {done}{img && <img src={img} alt="" style={{ display: "block", width: "100%", borderRadius: 12, marginTop: 10 }} />}</div>}
         {log.length > 0 && <div className="log">{log.map((l, i) => <div key={i}>{l}</div>)}</div>}
       </div>
     </div>
