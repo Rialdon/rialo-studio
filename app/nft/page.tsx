@@ -70,7 +70,11 @@ export default function CreateNft() {
         description: desc.trim(),
         image: image.trim(),
       });
-      const uri = "data:application/json;base64," + btoa(unescape(encodeURIComponent(json)));
+      add("Uploading metadata...");
+      const mr = await fetch("/api/metadata", { method: "POST", headers: { "Content-Type": "application/json" }, body: json });
+      const mj = await mr.json();
+      if (!mr.ok) throw new Error(mj.error || "Metadata upload failed");
+      const uri: string = mj.url;
       const uriBytes = enc.encode(uri).length;
       if (uriBytes > 700) throw new Error("Metadata too long. Use a shorter description or image URL.");
 
