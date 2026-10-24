@@ -14,6 +14,7 @@ export default function LaunchCollection() {
   const [desc, setDesc] = useState("");
   const [price, setPrice] = useState("0.1");
   const [perWallet, setPerWallet] = useState("0");
+  const [supply, setSupply] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<string[]>([]);
@@ -34,6 +35,7 @@ export default function LaunchCollection() {
       if (new TextEncoder().encode(name.trim()).length > 24) throw new Error("Name max 24 characters.");
       if (new TextEncoder().encode(symbol.trim()).length > 16) throw new Error("Symbol max 16 characters.");
       if (files.length < 1 || files.length > 50) throw new Error("Pick 1 to 50 images.");
+      const supplyN = Math.min(100000, parseInt(supply, 10) || files.length);
       const { cdk, client } = await loadCdk();
       const P = (s: string) => cdk.PublicKey.fromString(s);
       const A = (k: any, w: boolean, s = false) => ({ pubkey: k, isSigner: s, isWritable: w });
@@ -42,21 +44,24 @@ export default function LaunchCollection() {
       const owner = P(address!);
       const id = BigInt(Date.now());
 
-      let base = "";
+      const urls: string[] = [];
       for (let i = 0; i < files.length; i++) {
-        add(`Uploading ${i + 1}/${files.length}...`);
+        add(`Uploading image ${i + 1}/${files.length}...`);
         const fd = new FormData();
         fd.append("file", files[i]);
-        fd.append("name", `${name.trim()} #${i + 1}`);
-        fd.append("symbol", symbol.trim());
-        fd.append("description", desc.trim());
-        fd.append("id", id.toString());
-        fd.append("index", String(i + 1));
-        const r = await fetch("/api/collection-upload", { method: "POST", body: fd });
+        const r = await fetch("/api/upload", { method: "POST", body: fd });
         const j = await r.json();
         if (!r.ok) throw new Error(j.error || "Upload failed");
-        if (i === 0) base = String(j.url).slice(0, -"1.json".length);
+        urls.push(j.url);
       }
+      const cr = await fetch("/api/collection-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: id.toString(), name: name.trim(), symbol: symbol.trim(), description: desc.trim(), images: urls }),
+      });
+      const cj = await cr.json();
+      if (!cr.ok) throw new Error(cj.error || "Config failed");
+      const base = `${window.location.origin}/api/meta/${id}/`;
       if (enc.encode(base).length > 128) throw new Error("Base URI too long.");
       add("Base URI: " + base);
 
@@ -70,7 +75,7 @@ export default function LaunchCollection() {
 
       const data = cat(
         new Uint8Array([0]),
-        u64(id), u64(priceK), u64(BigInt(files.length)), u64(perw), u64(lam),
+        u64(id), u64(priceK), u64(BigInt(supplyN)), u64(perw), u64(lam),
         lstr(name.trim()), lstr(symbol.trim()), lstr(base)
       );
       const tx = cdk.TransactionBuilder.create()
@@ -106,7 +111,7 @@ export default function LaunchCollection() {
     <div className="page">
       <div className="screen">
         <h2>Launch collection</h2>
-        <p className="sub">Each image becomes one NFT. Price and limits are enforced on-chain.</p>
+        <p className="sub">Images repeat if supply is higher than the image count. Price and limits are enforced on-chain.</p>
 
         <div className="two">
           <div className="f"><label>Name</label><input className="in" value={name} onChange={(e) => setName(e.target.value)} /></div>
@@ -114,6 +119,7 @@ export default function LaunchCollection() {
           <div className="f"><label>Price (RIALO)</label><input className="in" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} /></div>
           <div className="f"><label>Max per wallet (0 = unlimited)</label><input className="in" inputMode="numeric" value={perWallet} onChange={(e) => setPerWallet(e.target.value)} /></div>
         </div>
+        <div className="f"><label>Supply (blank = number of images)</label><input className="in" inputMode="numeric" value={supply} onChange={(e) => setSupply(e.target.value)} /></div>
         <div className="f"><label>Description</label><input className="in" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
         <div className="f">
           <label>Images ({files.length} selected)</label>
