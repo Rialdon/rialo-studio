@@ -17,6 +17,7 @@ export default function MintPage() {
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
+  const [preview, setPreview] = useState("");
   const [txSig, setTxSig] = useState("");
   const [img, setImg] = useState("");
 
@@ -54,6 +55,14 @@ export default function MintPage() {
   useEffect(() => {
     if (col) load();
   }, [col]);
+
+  useEffect(() => {
+    if (!info || info.minted >= info.max) { setPreview(""); return; }
+    fetch(info.uri + (Number(info.minted) + 1) + ".json")
+      .then((r) => r.json())
+      .then((j) => setPreview(j.image || ""))
+      .catch(() => setPreview(""));
+  }, [info]);
 
   async function mint() {
     setBusy(true);
@@ -140,6 +149,8 @@ export default function MintPage() {
               (info.perw > 0n ? ` · max ${info.perw.toString()} per wallet` : "")
             : "Loading collection..."}
         </p>
+
+        {preview && <img src={preview} alt="" style={{ width: "100%", borderRadius: 12, marginBottom: 12 }} />}
 
         {!isConnected ? (
           <button className="btn" onClick={connect}>Connect wallet</button>
