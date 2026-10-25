@@ -15,6 +15,8 @@ const pct = (arr: string[], i: number) => {
 };
 const nz = (a: string[]) => a.filter((x) => (parseFloat(x) || 0) > 0).length;
 
+const toSec = (v: string) => (v ? Math.floor(new Date(v).getTime() / 1000) : 0);
+
 export default function LaunchCollection() {
   const { address, isConnected, connect, signAndSend } = useRialoWallet();
   const [name, setName] = useState("My Collection");
@@ -23,6 +25,8 @@ export default function LaunchCollection() {
   const [price, setPrice] = useState("0.1");
   const [perWallet, setPerWallet] = useState("0");
   const [supply, setSupply] = useState("100");
+  const [startAt, setStartAt] = useState("");
+  const [endAt, setEndAt] = useState("");
   const [base, setBase] = useState<File | null>(null);
   const [bgW, setBgW] = useState<string[]>(BG.map((b) => String(b.weight)));
   const [tintW, setTintW] = useState<string[]>(TINT.map((t) => String(t.weight)));
@@ -62,6 +66,8 @@ export default function LaunchCollection() {
       if (enc.encode(name.trim()).length > 24) throw new Error("Name max 24 characters.");
       if (enc.encode(symbol.trim()).length > 16) throw new Error("Symbol max 16 characters.");
       if (supplyN < 1) throw new Error("Supply must be at least 1.");
+      if (toSec(endAt) && toSec(endAt) <= Math.floor(Date.now() / 1000)) throw new Error("End time must be in the future.");
+      if (toSec(startAt) && toSec(endAt) && toSec(endAt) <= toSec(startAt)) throw new Error("End must be after start.");
       if (!base) throw new Error("Pick the base image (PNG).");
       if (base.type !== "image/png" || accFiles.some((f) => f.type !== "image/png")) throw new Error("All images must be PNG.");
 
@@ -98,14 +104,14 @@ export default function LaunchCollection() {
       add("Base URI: " + baseUri);
 
       let lam: any;
-      try { lam = await client.getMinimumBalanceForRentExemption(283n); }
-      catch { lam = await client.getMinimumBalanceForRentExemption(283); }
+      try { lam = await client.getMinimumBalanceForRentExemption(299n); }
+      catch { lam = await client.getMinimumBalanceForRentExemption(299); }
       lam = BigInt(lam);
       const priceK = BigInt(Math.round((parseFloat(price) || 0) * KELVIN));
       const perw = BigInt(Math.max(0, parseInt(perWallet, 10) || 0));
       const data = cat(
         new Uint8Array([0]),
-        u64(id), u64(priceK), u64(BigInt(supplyN)), u64(perw), u64(lam),
+        u64(id), u64(priceK), u64(BigInt(supplyN)), u64(perw), u64(lam), u64(BigInt(toSec(endAt))), u64(BigInt(toSec(startAt))),
         lstr(name.trim()), lstr(symbol.trim()), lstr(baseUri)
       );
       const tx = cdk.TransactionBuilder.create()
@@ -150,6 +156,10 @@ export default function LaunchCollection() {
           <div className="f"><label>Price (RIALO)</label><input className="in" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} /></div>
           <div className="f"><label>Supply</label><input className="in" inputMode="numeric" value={supply} onChange={(e) => setSupply(e.target.value)} /></div>
           <div className="f"><label>Max per wallet (0 = unlimited)</label><input className="in" inputMode="numeric" value={perWallet} onChange={(e) => setPerWallet(e.target.value)} /></div>
+        </div>
+        <div className="two">
+          <div className="f"><label>Start (optional)</label><input className="in" type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} /></div>
+          <div className="f"><label>End (optional)</label><input className="in" type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} /></div>
         </div>
         <div className="f"><label>Description</label><input className="in" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
 

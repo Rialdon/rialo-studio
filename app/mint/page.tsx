@@ -60,6 +60,8 @@ export default function MintPage() {
         name: str(104),
         symbol: str(137),
         uri: str(154),
+        end: u.length >= 299 ? dv.getBigUint64(283, true) : 0n,
+        start: u.length >= 299 ? dv.getBigUint64(291, true) : 0n,
       });
     } catch (e: any) {
       setError(String(e?.message || e).slice(0, 300));
@@ -89,6 +91,9 @@ export default function MintPage() {
   }, [col, address, isConnected, info]);
 
   const soldOut = info && info.minted >= info.max;
+  const nowS = Math.floor(Date.now() / 1000);
+  const ended = !!info && info.end > 0n && BigInt(nowS) > info.end;
+  const notStarted = !!info && info.start > 0n && BigInt(nowS) < info.start;
   const remaining = info ? Number(info.max - info.minted) : 0;
   const perw = info ? Number(info.perw) : 0;
   const limited = perw > 0;
@@ -210,6 +215,10 @@ export default function MintPage() {
 
   const btnLabel = soldOut
     ? "Sold out"
+    : ended
+    ? "Mint ended"
+    : notStarted
+    ? "Not started yet"
     : limited && allowed === 0
     ? "Limit reached"
     : busy
@@ -257,10 +266,12 @@ export default function MintPage() {
           </div>
         )}
 
+        {info && info.end > 0n && <p className="sub" style={{ fontWeight: 800 }}>Ends {new Date(Number(info.end) * 1000).toLocaleString()}</p>}
+
         {!isConnected ? (
           <button className="btn" onClick={connect}>Connect wallet</button>
         ) : (
-          <button className="btn mint" onClick={mint} disabled={busy || !info || soldOut || qtyNum < 1}>
+          <button className="btn mint" onClick={mint} disabled={busy || !info || soldOut || ended || notStarted || qtyNum < 1}>
             {btnLabel}
           </button>
         )}

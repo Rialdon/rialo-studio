@@ -1,4 +1,4 @@
-export const PROGRAM_ID = "F8XyGoC9ypN1n2zJaTLaqKFFLwDupUhgHdmQ9KrFH1hm";
+export const PROGRAM_ID = "EVKkYQKJAZWbrr3CDBjJLB1z8gtZdPqVgsvB3UbHke7g";
 export const T22 = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 export const ATAP = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
 export const KELVIN = 1_000_000_000;
