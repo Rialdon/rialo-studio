@@ -37,7 +37,7 @@ export default function Landing() {
       <section className="lp-hero">
         <div className="lp-hero-text">
           <span className="lp-badge">Rialo Testnet</span>
-          <h1>Launch tokens and NFTs on Rialo in a few taps</h1>
+          <h1>Launch tokens and NFTs on Rialo Testnet.</h1>
           <p className="lp-lead">
             Create a token, mint an NFT, or launch a whole generative collection.
             No code, one approval in your Rialo Wallet.
