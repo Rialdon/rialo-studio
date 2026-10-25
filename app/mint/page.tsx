@@ -134,6 +134,10 @@ export default function MintPage() {
       const space = 318 + enc.encode(info.name).length + 8 + enc.encode(info.symbol).length + enc.encode(info.uri).length + 10 + 100;
       const mintLam = await rentOf(space);
       const recLam = await rentOf(8);
+      const balK = BigInt(await client.getBalance(minter));
+      const needK = (BigInt(info.price) + mintLam) * BigInt(qtyNum) + recLam + 20000000n;
+      add("Balance " + (Number(balK) / KELVIN).toFixed(4) + " RIALO, need about " + (Number(needK) / KELVIN).toFixed(4));
+      if (balK < needK) throw new Error("Not enough RIALO. Need about " + (Number(needK) / KELVIN).toFixed(3) + ", you have " + (Number(balK) / KELVIN).toFixed(3) + ".");
       const baseIdx = Number(info.minted);
 
       const kps: any[] = [];

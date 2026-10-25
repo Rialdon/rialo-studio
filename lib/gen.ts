@@ -20,13 +20,16 @@ export async function chainState(col: string): Promise<{ minted: number; max: nu
     const r = await fetch(RPC, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getAccountInfo", params: [col, { encoding: "base64" }] }),
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getAccountInfo", params: [{ address: col }] }),
       cache: "no-store",
     });
     const j = await r.json();
-    const d = j?.result?.value?.data?.[0] ?? j?.result?.data?.[0];
-    if (typeof d !== "string") return null;
-    const u = Buffer.from(d, "base64");
+    let d: any = j?.result?.value?.data;
+    if (Array.isArray(d) && typeof d[0] === "string") d = d[0];
+    let u: Buffer;
+    if (typeof d === "string") u = Buffer.from(d, "base64");
+    else if (Array.isArray(d) && typeof d[0] === "number") u = Buffer.from(d);
+    else return null;
     if (u.length < 96) return null;
     return { max: Number(u.readBigUInt64LE(72)), minted: Number(u.readBigUInt64LE(80)) };
   } catch {
