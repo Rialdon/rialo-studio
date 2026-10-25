@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { loadCdk } from "../lib/cdk";
-import { b58, KELVIN } from "../lib/collection";
+import { b58, KELVIN, PROGRAM_ID } from "../lib/collection";
 import { HIDDEN } from "../lib/hidden";
 
 type Item = { id: string; name: string; symbol: string; description: string; base: string };
@@ -37,7 +37,7 @@ export default function Collections() {
           list.map(async (it) => {
             try {
               const a: any = await client.getAccountInfo(cdk.PublicKey.fromString(it.id));
-              if (!a) { setLive((p) => ({ ...p, [it.id]: null })); return; }
+              if (!a || String((a as any).owner) !== PROGRAM_ID) { setLive((p) => ({ ...p, [it.id]: null })); return; }
               const u = Uint8Array.from(atob(a.data[0]), (c) => c.charCodeAt(0));
               const dv = new DataView(u.buffer);
               const l: Live = {
