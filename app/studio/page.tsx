@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Collections from "./Collections";
+import Collections from "../Collections";
 
 export default function Home() {
   return (
