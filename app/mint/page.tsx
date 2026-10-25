@@ -18,6 +18,9 @@ const inputStyle: CSSProperties = {
 
 type Result = { mint: string; sig: string; img: string };
 
+// jumlah mint per transaksi (naikkan kalau tes lolos, turunkan kalau error)
+const MAX_PER_TX = 3;
+
 export default function MintPage() {
   const { address, isConnected, connect, signAndSendMany } = useRialoWallet();
   const [col, setCol] = useState("");
@@ -129,33 +132,50 @@ export default function MintPage() {
       const baseIdx = Number(info.minted);
 
       const kps: any[] = [];
-      const txs: Uint8Array[] = [];
+      for (let n = 0; n < qtyNum; n++) kps.push(cdk.Keypair.generate());
       const [rec] = cdk.PublicKey.findProgramAddress([enc.encode("rec"), colK.toBytes(), minter.toBytes()], P(PROGRAM_ID));
-      for (let n = 0; n < qtyNum; n++) {
-        const nk = cdk.Keypair.generate();
-        kps.push(nk);
-        add(`#${n + 1}: new mint ${nk.publicKey.toString()}`);
-        const [tomb] = cdk.PublicKey.findProgramAddress([enc.encode("mint_tombstone"), nk.publicKey.toBytes()], P(T22));
-        const [ata] = cdk.PublicKey.findProgramAddress([minter.toBytes(), P(T22).toBytes(), nk.publicKey.toBytes()], P(ATAP));
-        const data = cat(new Uint8Array([1]), u64(mintLam), u64(recLam));
-        const tx = cdk.TransactionBuilder.create()
+      let recExists = false;
+      try { recExists = !!(await client.getAccountInfo(rec)); } catch {}
+
+      // bagi ke beberapa transaksi; kalau akun rec belum ada, transaksi pertama hanya 1 mint
+      const groups: number[][] = [];
+      let idx = 0;
+      if (!recExists) { groups.push([0]); idx = 1; }
+      while (idx < qtyNum) {
+        const g: number[] = [];
+        for (let k = 0; k < MAX_PER_TX && idx < qtyNum; k++) g.push(idx++);
+        groups.push(g);
+      }
+
+      const txs: Uint8Array[] = [];
+      for (const g of groups) {
+        let bld: any = cdk.TransactionBuilder.create()
           .setPayer(minter)
           .setValidFrom(BigInt(Date.now()))
-          .setConfigHashPrefix(await client.getConfigHashPrefix())
-          .addInstruction({
+          .setConfigHashPrefix(await client.getConfigHashPrefix());
+        for (const n of g) {
+          const nk = kps[n];
+          add(`#${n + 1}: new mint ${nk.publicKey.toString()}`);
+          const [tomb] = cdk.PublicKey.findProgramAddress([enc.encode("mint_tombstone"), nk.publicKey.toBytes()], P(T22));
+          const [ata] = cdk.PublicKey.findProgramAddress([minter.toBytes(), P(T22).toBytes(), nk.publicKey.toBytes()], P(ATAP));
+          const data = cat(new Uint8Array([1]), u64(mintLam), u64(recLam));
+          bld = bld.addInstruction({
             programId: P(PROGRAM_ID),
             data,
             accounts: [
               A(minter, true, true), A(colK, true), A(P(treasury), true), A(nk.publicKey, true, true),
               A(ata, true), A(rec, true), A(tomb, false), A(P(T22), false), A(P(ATAP), false), A(sys, false),
             ],
-          })
-          .build();
-        txs.push(tx.signAll([nk]).serialize());
+          });
+        }
+        const tx = bld.build();
+        txs.push(tx.signAll(g.map((n) => kps[n])).serialize());
       }
 
-      add(qtyNum > 1 ? `Sending ${qtyNum} mints to your wallet...` : "Sending to your wallet...");
+      add(`Sending ${qtyNum} mint(s) in ${txs.length} transaction(s)...`);
       const sigs = await signAndSendMany(txs);
+      const sigOfNft: any[] = [];
+      groups.forEach((g, gi) => g.forEach((n) => { sigOfNft[n] = sigs[gi]; }));
 
       for (let n = 0; n < qtyNum; n++) {
         setProgress(`${n + 1}/${qtyNum}`);
@@ -174,7 +194,7 @@ export default function MintPage() {
           const mj = await (await fetch(info.uri + (baseIdx + n + 1) + ".json")).json();
           img = mj.image || "";
         } catch {}
-        got.push({ mint: nk.publicKey.toString(), sig: sigOf(sigs[n]), img });
+        got.push({ mint: nk.publicKey.toString(), sig: sigOf(sigOfNft[n]), img });
         setResults([...got]);
       }
       setShowModal(true);
