@@ -20,14 +20,7 @@ export default function TopBar() {
   return (
     <div className="topbar">
       <Link href="/" className="brand">
-        <svg width="30" height="30" viewBox="0 0 64 64" style={{ color: "var(--pink)" }}>
-          <path d="M6 18 L22 28 L22 36 L6 46 Z" fill="currentColor" stroke="#3b1d3f" strokeWidth="3" strokeLinejoin="round" />
-          <path d="M58 18 L42 28 L42 36 L58 46 Z" fill="currentColor" stroke="#3b1d3f" strokeWidth="3" strokeLinejoin="round" />
-          <circle cx="32" cy="32" r="16" fill="currentColor" stroke="#3b1d3f" strokeWidth="3" />
-          <circle cx="27" cy="33" r="2.2" fill="#3b1d3f" />
-          <circle cx="37" cy="33" r="2.2" fill="#3b1d3f" />
-          <path d="M28 39 Q32 42 36 39" fill="none" stroke="#3b1d3f" strokeWidth="2.4" strokeLinecap="round" />
-        </svg>
+        <img src="/logo.png" width={42} height={42} alt="" />
         <span>Rialo <b>Studio</b></span>
       </Link>
       <div ref={ref} style={{ position: "relative" }}>
