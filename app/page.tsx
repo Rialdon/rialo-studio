@@ -22,11 +22,11 @@ export default function Home() {
             <b>Launch collection</b>
             <small>Each image = one NFT</small>
           </Link>
-          <div className="tile off" style={{ background: "#e3fbf3" }}>
+          <Link href="/market" className="tile" style={{ background: "#e3fbf3" }}>
             <div className="ico">$</div>
             <b>Market</b>
-            <small>Coming soon</small>
-          </div>
+            <small>Browse collections</small>
+          </Link>
         </div>
       </div>
       <p className="fine">Rialo Testnet only. Not audited.</p>
