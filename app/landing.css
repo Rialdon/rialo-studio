@@ -6,7 +6,7 @@
 .lp-sub { font-size: 14px; font-weight: 600; opacity: .7; margin-bottom: 18px !important; }
 
 .lp-hero { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: center; padding: 18px 0 36px; }
-@media (min-width: 820px) { .lp-hero { grid-template-columns: 1.1fr .9fr; padding: 40px 0 56px; } }
+@media (min-width: 1024px) { .lp-hero { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); padding: 40px 0 56px; } }
 .lp-badge { display: inline-block; font-size: 12px; font-weight: 900; padding: 5px 14px; border: 3px solid var(--ink); border-radius: 999px; background: var(--lemon); }
 .lp-lead { font-size: 17px; font-weight: 600; line-height: 1.5; opacity: .8; max-width: 520px; }
 .lp-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
