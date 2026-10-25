@@ -179,6 +179,7 @@ export default function MintPage() {
 
       add(`Sending ${qtyNum} mint(s) in ${txs.length} transaction(s)...`);
       const sigs = await signAndSendMany(txs);
+      add("Wallet returned " + (Array.isArray(sigs) ? sigs.length + " result(s)" : typeof sigs));
       const sigOfNft: any[] = [];
       groups.forEach((g, gi) => g.forEach((n) => { sigOfNft[n] = sigs[gi]; }));
 
@@ -204,7 +205,8 @@ export default function MintPage() {
       }
       setShowModal(true);
     } catch (e: any) {
-      setError(String(e?.message || e).slice(0, 300));
+      console.error("mint error", e);
+      setError(String(e?.message || e || "Wallet closed or rejected the request (no error message)").slice(0, 300));
       if (got.length) setShowModal(true);
     } finally {
       setBusy(false);

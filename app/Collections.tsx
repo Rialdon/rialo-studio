@@ -64,8 +64,9 @@ export default function Collections() {
   const ended = (l: Live | null | undefined) => !!l && l.end > 0n && BigInt(now) > l.end;
   const soldOut = (l: Live | null | undefined) => !!l && l.minted >= l.max;
   const shown = (items || [])
-    .filter((it) => live[it.id] !== null && !ended(live[it.id]))
+    .filter((it) => live[it.id] != null && !ended(live[it.id]))
     .sort((x, y) => Number(soldOut(live[x.id])) - Number(soldOut(live[y.id])));
+  const pending = !!items && items.some((it) => live[it.id] === undefined);
 
   return (
     <div className="screen">
@@ -73,7 +74,7 @@ export default function Collections() {
       <p className="sub">Collections launched on Rialo Studio</p>
       {error && <div className="err">{error}</div>}
       {!items && !error && <p className="fine">Loading collections...</p>}
-      {items && shown.length === 0 && <p className="fine">No collections yet.</p>}
+      {items && shown.length === 0 && <p className="fine">{pending ? "Loading collections..." : "No collections yet."}</p>}
 
       <div style={{ display: "grid", gap: 16 }}>
         {shown.map((it) => {
