@@ -13,6 +13,7 @@ type WalletCtx = {
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   signAndSend: (tx: Uint8Array) => Promise<any>;
+  signAndSendMany: (txs: Uint8Array[]) => Promise<any[]>;
 };
 
 const Ctx = createContext<WalletCtx | null>(null);
@@ -122,6 +123,28 @@ export function Providers({ children }: { children: ReactNode }) {
     [wallet, account]
   );
 
+  const signAndSendMany = useCallback(
+    async (txs: Uint8Array[]) => {
+      const feature = wallet?.features?.["rialo:signAndSendTransaction"];
+      if (!feature || !account) throw new Error("Wallet is not connected");
+      const one = (t: Uint8Array) => feature.signAndSendTransaction({ account, transaction: t, chain: CHAIN });
+      let done: any[] = [];
+      if (txs.length > 1) {
+        try {
+          const out = await feature.signAndSendTransaction(
+            ...txs.map((t) => ({ account, transaction: t, chain: CHAIN }))
+          );
+          done = Array.isArray(out) ? out : [out];
+        } catch (e: any) {
+          if (/reject|denied|declin|cancel|refus/i.test(String(e?.message || e))) throw e;
+        }
+      }
+      for (let i = done.length; i < txs.length; i++) done.push(await one(txs[i]));
+      return done;
+    },
+    [wallet, account]
+  );
+
   const value: WalletCtx = {
     installed: !!wallet,
     isConnected: !!account,
@@ -130,6 +153,7 @@ export function Providers({ children }: { children: ReactNode }) {
     connect,
     disconnect,
     signAndSend,
+    signAndSendMany,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
