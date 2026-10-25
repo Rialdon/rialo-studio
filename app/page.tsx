@@ -52,7 +52,7 @@ export default function Landing() {
             <Link className="lp-btn" href="/studio">Open Studio</Link>
             <Link className="lp-btn lp-btn-alt" href="/market">Browse market</Link>
           </div>
-          <p className="lp-note">Rialo Testnet .</p>
+          
         </div>
         <div className="lp-art" aria-hidden="true">
           <div className="lp-candy c1"><Candy color="#8b5cf6" size={150} /></div>
