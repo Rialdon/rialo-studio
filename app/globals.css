@@ -40,3 +40,33 @@ h2 { margin: 0 0 4px; font-size: 22px; font-weight: 900; }
 .ok { border: 3px solid var(--ink); border-radius: 18px; background: #e3fbf3; padding: 12px; margin-top: 12px; word-break: break-all; font-size: 13px; font-weight: 800; }
 .err { color: #e5173f; font-size: 13px; font-weight: 800; margin-top: 10px; word-break: break-word; }
 .fine { font-size: 11px; font-weight: 600; opacity: .65; margin: 10px 0 0; text-align: center; }
+
+/* ===== layar lebar: tablet, laptop, PC ===== */
+@media (min-width: 768px) {
+  .page { max-width: 760px; padding: 28px 24px 56px; }
+  .topbar { max-width: 760px; padding: 18px 24px; }
+  .brand { font-size: 24px; }
+  .pill { font-size: 14px; padding: 8px 16px; }
+  .screen { padding: 28px; border-radius: 32px; box-shadow: 7px 7px 0 var(--ink); }
+  h1 { font-size: 34px; }
+  h2 { font-size: 30px; }
+  .sub { font-size: 16px; margin-bottom: 20px; }
+  .tiles { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+  .tile { padding: 16px; }
+  .tile b { font-size: 17px; }
+  .tile small { font-size: 13px; }
+  .ico { width: 52px; height: 52px; font-size: 24px; }
+  .f label { font-size: 14px; }
+  .in { font-size: 16px; padding: 12px 16px; }
+  .two { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+  .toggle { font-size: 15px; }
+  .btn { font-size: 18px; padding: 15px; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .prev { padding: 16px; }
+  .log, .ok { font-size: 14px; }
+  .err { font-size: 15px; }
+  .fine { font-size: 13px; }
+  .screen > img, .ok img { max-width: 420px !important; margin-left: auto; margin-right: auto; display: block; }
+}
+@media (min-width: 1400px) {
+  .page, .topbar { max-width: 900px; }
+}
