@@ -16,7 +16,6 @@ export default function CreateNft() {
   const [symbol, setSymbol] = useState("");
   const [desc, setDesc] = useState("");
   const [image, setImage] = useState("");
-  const [lock, setLock] = useState(true);
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -123,9 +122,8 @@ export default function CreateNft() {
         .addInstruction({ programId: P(T22), data: md, accounts: [A(mint.publicKey, true), A(owner, false), A(mint.publicKey, false), A(owner, false, true)] })
         .addInstruction({ programId: P(ATAP), data: new Uint8Array([1]), accounts: [A(owner, true, true), A(ata, true), A(owner, false), A(mint.publicKey, false), A(sys, false), A(P(T22), false)] })
         .addInstruction({ programId: P(T22), data: mintTo, accounts: [A(mint.publicKey, true), A(ata, true), A(owner, false, true)] });
-      if (lock) {
-        b = b.addInstruction({ programId: P(T22), data: new Uint8Array([6, 0, 0]), accounts: [A(mint.publicKey, true), A(owner, false, true)] });
-      }
+      // supply selalu dikunci: NFT 1-of-1 tidak bisa dicetak lagi
+      b = b.addInstruction({ programId: P(T22), data: new Uint8Array([6, 0, 0]), accounts: [A(mint.publicKey, true), A(owner, false, true)] });
       const tx = b.build();
 
       const partial = tx.signAll([mint]);
@@ -157,7 +155,7 @@ export default function CreateNft() {
     <div className="page">
       <div className="screen">
         <h2>Create NFT</h2>
-        <p className="sub">Mints one Token-2022 NFT (supply 1, 0 decimals) with on-chain metadata.</p>
+        <p className="sub">Mints one Token-2022 NFT (supply 1, 0 decimals) with on-chain metadata. Supply is always locked.</p>
 
         <div className="two">
           <div className="f"><label>Name</label><input className="in" placeholder="My First NFT" value={name} onChange={(e) => setName(e.target.value)} /></div>
@@ -165,11 +163,6 @@ export default function CreateNft() {
         </div>
         <div className="f"><label>Description</label><input className="in" placeholder="Short description" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
         <div className="f"><label>Image</label><input className="in" type="file" accept="image/*" onChange={pick} />{uploading && <small>Uploading...</small>}</div>
-
-        <div className="toggle" onClick={() => setLock((v) => !v)}>
-          <span>Lock supply (no more minting)</span>
-          <span className={"sw" + (lock ? " on" : "")}><i /></span>
-        </div>
 
         <div className="prev">
           {image ? (
