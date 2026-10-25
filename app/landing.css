@@ -47,3 +47,20 @@
 .lp-band .lp-btn-alt { color: var(--ink); }
 
 .lp-foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 28px; font-size: 12px; font-weight: 800; opacity: .65; }
+
+/* kartu NFT miring di hero */
+.lp-art { position: relative; }
+.lp-tcard { position: absolute; width: 38%; padding: 7px; background: #fff; border: 3px solid #3b1d3f; border-radius: 16px; box-shadow: 4px 4px 0 #3b1d3f; transform: rotate(var(--r, 0deg)); animation: lp-tfloat 4.5s ease-in-out infinite; }
+.lp-tcard-img { aspect-ratio: 1; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 10px; }
+.lp-tcard-img img { width: 100%; height: 100%; object-fit: contain; }
+.lp-tcard b { display: block; margin-top: 6px; font-size: 13px; color: #3b1d3f; }
+.lp-tcard small { display: block; font-size: 11px; color: #7a5d86; }
+.lp-tcard.t1 { left: 6%; top: 7%; }
+.lp-tcard.t2 { left: 54%; top: 4%; animation-delay: -1.2s; animation-duration: 5.2s; }
+.lp-tcard.t3 { left: 9%; top: 50%; animation-delay: -2.4s; animation-duration: 4.8s; }
+.lp-tcard.t4 { left: 52%; top: 52%; animation-delay: -3.3s; animation-duration: 5.6s; }
+@keyframes lp-tfloat {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-12px) rotate(var(--r, 0deg)); }
+}
+@media (prefers-reduced-motion: reduce) { .lp-tcard { animation: none; } }

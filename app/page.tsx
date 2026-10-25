@@ -1,22 +1,16 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import "./landing.css";
 
 const WALLET_STORE =
   "https://chromewebstore.google.com/detail/rialo-wallet/dbmgekigjgnahdnfgfpdognodiegpmcg";
 
-function Candy({ color, size }: { color: string; size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" style={{ color }} aria-hidden="true">
-      <path d="M6 18 L22 28 L22 36 L6 46 Z" fill="currentColor" stroke="#3b1d3f" strokeWidth="3" strokeLinejoin="round" />
-      <path d="M58 18 L42 28 L42 36 L58 46 Z" fill="currentColor" stroke="#3b1d3f" strokeWidth="3" strokeLinejoin="round" />
-      <circle cx="32" cy="32" r="16" fill="currentColor" stroke="#3b1d3f" strokeWidth="3" />
-      <path d="M22 26 Q32 18 42 26" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" opacity="0.8" />
-      <circle cx="27" cy="33" r="2.2" fill="#3b1d3f" />
-      <circle cx="37" cy="33" r="2.2" fill="#3b1d3f" />
-      <path d="M28 39 Q32 42 36 39" fill="none" stroke="#3b1d3f" strokeWidth="2.4" strokeLinecap="round" />
-    </svg>
-  );
-}
+const CARDS = [
+  { name: "Studio #1", price: "0.1 RIALO", bg: "#cbbcff", rot: "-9deg" },
+  { name: "Studio #2", price: "0.1 RIALO", bg: "#9af0d6", rot: "7deg" },
+  { name: "Studio #3", price: "0.1 RIALO", bg: "#fff1f7", rot: "5deg" },
+  { name: "Studio #4", price: "0.1 RIALO", bg: "#bfe8ff", rot: "-7deg" },
+];
 
 const FEATURES = [
   { icon: "T", title: "Create token", text: "Name, symbol, decimals and supply. Lock the supply when you are done.", href: "/token", bg: "#fff6d6" },
@@ -55,10 +49,15 @@ export default function Landing() {
           
         </div>
         <div className="lp-art" aria-hidden="true">
-          <div className="lp-candy c1"><Candy color="#8b5cf6" size={150} /></div>
-          <div className="lp-candy c2"><Candy color="#ff5fa2" size={110} /></div>
-          <div className="lp-candy c3"><Candy color="#3ddbb0" size={90} /></div>
-          <div className="lp-candy c4"><Candy color="#ffd84d" size={70} /></div>
+          {CARDS.map((c, i) => (
+            <div key={c.name} className={`lp-tcard t${i + 1}`} style={{ "--r": c.rot } as CSSProperties}>
+              <div className="lp-tcard-img" style={{ background: c.bg }}>
+                <img src="/logo.png" alt="" />
+              </div>
+              <b>{c.name}</b>
+              <small>{c.price}</small>
+            </div>
+          ))}
         </div>
       </section>
 
