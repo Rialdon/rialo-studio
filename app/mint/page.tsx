@@ -17,7 +17,7 @@ export default function MintPage() {
   const [log, setLog] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
-  const [preview, setPreview] = useState("");
+  const [showModal, setShowModal] = useState(false);
   const [txSig, setTxSig] = useState("");
   const [img, setImg] = useState("");
 
@@ -56,14 +56,6 @@ export default function MintPage() {
     if (col) load();
   }, [col]);
 
-  useEffect(() => {
-    if (!info || info.minted >= info.max) { setPreview(""); return; }
-    fetch(info.uri + (Number(info.minted) + 1) + ".json")
-      .then((r) => r.json())
-      .then((j) => setPreview(j.image || ""))
-      .catch(() => setPreview(""));
-  }, [info]);
-
   async function mint() {
     setBusy(true);
     setLog([]);
@@ -75,6 +67,7 @@ export default function MintPage() {
       if (!info) throw new Error("Collection not loaded.");
       if (!treasury) throw new Error("Missing treasury in the link (&t=...).");
       if (info.minted >= info.max) throw new Error("Sold out.");
+      const tokenIdx = Number(info.minted) + 1;
       const { cdk, client } = await loadCdk();
       const P = (s: string) => cdk.PublicKey.fromString(s);
       const A = (k: any, w: boolean, s = false) => ({ pubkey: k, isSigner: s, isWritable: w });
@@ -123,8 +116,9 @@ export default function MintPage() {
         try {
           const a = await client.getAccountInfo(mint.publicKey);
           if (a) {
+            try { const mj = await (await fetch(info.uri + tokenIdx + ".json")).json(); setImg(mj.image || ""); } catch {}
             setDone(mint.publicKey.toString());
-            try { const mj = await (await fetch(info.uri + (Number(info.minted) + 1) + ".json")).json(); setImg(mj.image || ""); } catch {}
+            setShowModal(true);
             load();
             return;
           }
@@ -150,7 +144,9 @@ export default function MintPage() {
             : "Loading collection..."}
         </p>
 
-        {preview && <img src={preview} alt="" style={{ width: "100%", borderRadius: 12, marginBottom: 12 }} />}
+        {info && !soldOut && (
+          <div style={{ width: "100%", aspectRatio: "1 / 1", borderRadius: 12, marginBottom: 12, background: "linear-gradient(135deg,#b8a5ff,#ff9ecb)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 110, fontWeight: 900, color: "#3b1a45" }}>?</div>
+        )}
 
         {!isConnected ? (
           <button className="btn" onClick={connect}>Connect wallet</button>
@@ -162,7 +158,17 @@ export default function MintPage() {
         <p className="fine">Price plus network fees apply. You approve once in your Rialo Wallet.</p>
 
         {error && <div className="err">{error}</div>}
-        {done && <div className="ok">NFT minted!<br />Mint: {done}{txSig && <><br /><a href={EXPLORER + "/txs/" + txSig} target="_blank" rel="noreferrer">View transaction</a></>}{img && <img src={img} alt="" style={{ display: "block", width: "100%", borderRadius: 12, marginTop: 10 }} />}</div>}
+        {done && showModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
+            <div style={{ background: "#fff", borderRadius: 20, border: "3px solid #3b1a45", padding: 20, maxWidth: 360, width: "100%", textAlign: "center" }}>
+              {img ? <img src={img} alt="" style={{ width: "100%", borderRadius: 12 }} /> : <p>Loading image...</p>}
+              <h3 style={{ margin: "14px 0 6px" }}>Mint Successful!</h3>
+              <p style={{ fontSize: 12, wordBreak: "break-all", margin: "0 0 8px" }}>Mint: {done}</p>
+              {txSig && <p style={{ margin: "0 0 12px" }}><a href={EXPLORER + "/txs/" + txSig} target="_blank" rel="noreferrer">View transaction</a></p>}
+              <button className="btn" onClick={() => setShowModal(false)}>OK</button>
+            </div>
+          </div>
+        )}
         {log.length > 0 && <div className="log">{log.map((l, i) => <div key={i}>{l}</div>)}</div>}
       </div>
     </div>
