@@ -33,7 +33,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       attributes: [
         { trait_type: "Background", value: BG[a.bg].name },
         { trait_type: "Color", value: TINT[a.tint].name },
-        { trait_type: cfg.accCat, value: a.acc >= 0 ? cfg.acc[a.acc].name : "None" },
+        ...(cfg.acc.length ? [{ trait_type: cfg.accCat, value: a.acc >= 0 ? cfg.acc[a.acc].name : "None" }] : []),
       ],
     },
     { headers: { ...cors, "Cache-Control": "public, max-age=3600" } }

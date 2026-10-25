@@ -189,32 +189,6 @@ export default function LaunchCollection() {
           ))}
         </div>
 
-        <p className="sub">Optional accessories (PNG, same size as base)</p>
-        <div className="f"><label>Category name</label><input className="in" placeholder="Hat" value={accCat} onChange={(e) => setAccCat(e.target.value)} /></div>
-        <div className="f">
-          <label>{accCat || "Accessory"} images ({accFiles.length} selected)</label>
-          <input
-            className="in" type="file" accept="image/png" multiple
-            onChange={(e) => {
-              const fl = Array.from(e.target.files || []).slice(0, 50);
-              setAccFiles(fl);
-              setAccW(fl.map(() => "10"));
-            }}
-          />
-        </div>
-        <div className="two">
-          {accFiles.map((f, i) => (
-            <div className="f" key={f.name + i}>
-              <label>{f.name.replace(/\.[^.]+$/, "")} ({pct([...accW, noneW].slice(0, accW.length).concat([noneW]), i)}%)</label>
-              <input className="in" inputMode="decimal" value={accW[i]} onChange={(e) => setAccW(accW.map((v, j) => (j === i ? e.target.value : v)))} />
-            </div>
-          ))}
-          <div className="f">
-            <label>No {accCat || "accessory"} ({pct([...accW, noneW], accW.length)}%)</label>
-            <input className="in" inputMode="decimal" value={noneW} onChange={(e) => setNoneW(e.target.value)} />
-          </div>
-        </div>
-
         <p className="fine">
           {combos.toLocaleString()} possible combinations
           {supplyN > combos ? ". Supply is higher than that, so duplicates will happen." : "."}
