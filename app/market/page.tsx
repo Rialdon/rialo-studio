@@ -4,6 +4,7 @@ import Link from "next/link";
 import { loadCdk } from "../../lib/cdk";
 import { b58, KELVIN } from "../../lib/collection";
 import MyNfts from "./MyNfts";
+import Listings from "./Listings";
 
 type Item = { id: string; name: string; symbol: string; description: string; base: string };
 type Live = { price: bigint; max: bigint; minted: bigint; perw: bigint; treasury: string };
@@ -14,7 +15,7 @@ const tab = (on: boolean): CSSProperties => ({
 });
 
 export default function MarketPage() {
-  const [view, setView] = useState<"col" | "mine">("col");
+  const [view, setView] = useState<"col" | "list" | "mine">("col");
   const [items, setItems] = useState<Item[] | null>(null);
   const [live, setLive] = useState<Record<string, Live | null>>({});
   const [error, setError] = useState("");
@@ -62,11 +63,14 @@ export default function MarketPage() {
         <h2>Market</h2>
         <div style={{ display: "flex", gap: 8, margin: "4px 0 14px" }}>
           <button type="button" style={tab(view === "col")} onClick={() => setView("col")}>Collections</button>
+          <button type="button" style={tab(view === "list")} onClick={() => setView("list")}>Listings</button>
           <button type="button" style={tab(view === "mine")} onClick={() => setView("mine")}>My NFTs</button>
         </div>
 
         {view === "mine" ? (
           <MyNfts />
+        ) : view === "list" ? (
+          <Listings />
         ) : (
           <>
             <p className="sub">Collections launched on Rialo Studio</p>
