@@ -17,6 +17,21 @@ const nz = (a: string[]) => a.filter((x) => (parseFloat(x) || 0) > 0).length;
 
 const toSec = (v: string) => (v ? Math.floor(new Date(v).getTime() / 1000) : 0);
 
+async function toPng(file: File): Promise<File> {
+  let bmp: ImageBitmap;
+  try { bmp = await createImageBitmap(file); }
+  catch { throw new Error("This image format is not supported by your browser. Try JPG or PNG."); }
+  const k = Math.min(1, 1000 / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * k));
+  const h = Math.max(1, Math.round(bmp.height * k));
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  c.getContext("2d")!.drawImage(bmp, 0, 0, w, h);
+  const blob: Blob = await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("Could not convert image"))), "image/png"));
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".png", { type: "image/png" });
+}
+
 export default function LaunchCollection() {
   const { address, isConnected, connect, signAndSend } = useRialoWallet();
   const [name, setName] = useState("");
@@ -70,7 +85,7 @@ export default function LaunchCollection() {
       if (toSec(endAt) && toSec(endAt) <= Math.floor(Date.now() / 1000)) throw new Error("End time must be in the future.");
       if (toSec(startAt) && toSec(endAt) && toSec(endAt) <= toSec(startAt)) throw new Error("End must be after start.");
       if (!base) throw new Error("Pick the base image (PNG).");
-      if (base.type !== "image/png" || accFiles.some((f) => f.type !== "image/png")) throw new Error("All images must be PNG.");
+      if (!base.type.startsWith("image/")) throw new Error("Base file must be an image.");
 
       const { cdk, client } = await loadCdk();
       const P = (s: string) => cdk.PublicKey.fromString(s);
@@ -82,7 +97,7 @@ export default function LaunchCollection() {
       const colS = col.toString();
 
       add("Uploading base image...");
-      const baseUrl = await up(base);
+      const baseUrl = await up(await toPng(base));
       const acc: { name: string; url: string; weight: number }[] = [];
       for (let i = 0; i < accFiles.length; i++) {
         add(`Uploading ${accCat} ${i + 1}/${accFiles.length}...`);
@@ -165,8 +180,8 @@ export default function LaunchCollection() {
         <div className="f"><label>Description</label><input className="in" placeholder="Short description" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
 
         <div className="f">
-          <label>Base image (PNG, transparent)</label>
-          <input className="in" type="file" accept="image/png" onChange={(e) => setBase(e.target.files?.[0] || null)} />
+          <label>Base image (any image; transparent PNG works best)</label>
+          <input className="in" type="file" accept="image/*" onChange={(e) => setBase(e.target.files?.[0] || null)} />
         </div>
 
         <p className="sub">Background rarity (weight)</p>
