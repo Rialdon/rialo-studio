@@ -7,7 +7,7 @@ import MyNfts from "./MyNfts";
 import Listings from "./Listings";
 
 type Item = { id: string; name: string; symbol: string; description: string; base: string };
-type Live = { price: bigint; max: bigint; minted: bigint; perw: bigint; treasury: string };
+type Live = { price: bigint; max: bigint; minted: bigint; perw: bigint; treasury: string; end: bigint };
 
 const tab = (on: boolean): CSSProperties => ({
   flex: 1, height: 40, borderRadius: 12, border: "3px solid #3b1a45",
@@ -42,6 +42,7 @@ export default function MarketPage() {
                 minted: dv.getBigUint64(80, true),
                 perw: dv.getBigUint64(88, true),
                 treasury: b58(u.slice(32, 64)),
+                end: u.length >= 299 ? dv.getBigUint64(283, true) : 0n,
               };
               setLive((p) => ({ ...p, [it.id]: l }));
             } catch {
@@ -55,7 +56,7 @@ export default function MarketPage() {
     })();
   }, []);
 
-  const shown = (items || []).filter((it) => live[it.id] !== null);
+  const shown = (items || []).filter((it) => { const l = live[it.id]; return l !== null && !(l && l.end > 0n && BigInt(Math.floor(Date.now() / 1000)) > l.end); });
 
   return (
     <div className="page">
