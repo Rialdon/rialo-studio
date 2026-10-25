@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Collections from "./Collections";
 
 export default function Home() {
   return (
@@ -29,7 +30,8 @@ export default function Home() {
           </Link>
         </div>
       </div>
-      <p className="fine">Rialo Testnet only. Not audited.</p>
+      <Collections />
+        <p className="fine">Rialo Testnet only. Not audited.</p>
     </div>
   );
 }
