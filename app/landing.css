@@ -64,3 +64,11 @@
   50% { transform: translateY(-12px) rotate(var(--r, 0deg)); }
 }
 @media (prefers-reduced-motion: reduce) { .lp-tcard { animation: none; } }
+
+/* Beri ruang untuk kartu NFT pada mode desktop di HP */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .lp-art {
+    height: 440px;
+  }
+}
+
