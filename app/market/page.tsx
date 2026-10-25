@@ -1,13 +1,20 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, CSSProperties } from "react";
 import Link from "next/link";
 import { loadCdk } from "../../lib/cdk";
 import { b58, KELVIN } from "../../lib/collection";
+import MyNfts from "./MyNfts";
 
 type Item = { id: string; name: string; symbol: string; description: string; base: string };
 type Live = { price: bigint; max: bigint; minted: bigint; perw: bigint; treasury: string };
 
+const tab = (on: boolean): CSSProperties => ({
+  flex: 1, height: 40, borderRadius: 12, border: "3px solid #3b1a45",
+  background: on ? "#ffd84a" : "#fff", color: "#3b1a45", fontWeight: 900, cursor: "pointer",
+});
+
 export default function MarketPage() {
+  const [view, setView] = useState<"col" | "mine">("col");
   const [items, setItems] = useState<Item[] | null>(null);
   const [live, setLive] = useState<Record<string, Live | null>>({});
   const [error, setError] = useState("");
@@ -53,51 +60,61 @@ export default function MarketPage() {
     <div className="page">
       <div className="screen">
         <h2>Market</h2>
-        <p className="sub">Collections launched on Rialo Studio</p>
-
-        {error && <div className="err">{error}</div>}
-        {!items && !error && <p className="fine">Loading collections...</p>}
-        {items && shown.length === 0 && <p className="fine">No collections yet.</p>}
-
-        <div style={{ display: "grid", gap: 16 }}>
-          {shown.map((it) => {
-            const l = live[it.id];
-            const pct = l && l.max > 0n ? Math.min(100, (Number(l.minted) * 100) / Number(l.max)) : 0;
-            const soldOut = !!l && l.minted >= l.max;
-            return (
-              <div key={it.id} style={{ border: "3px solid #3b1a45", borderRadius: 20, padding: 14, background: "#fff" }}>
-                <div style={{ width: "100%", aspectRatio: "1 / 1", borderRadius: 12, background: "linear-gradient(135deg,#b8a5ff,#ff9ecb)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                  {it.base ? (
-                    <img src={it.base} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                  ) : (
-                    <span style={{ fontSize: 80, fontWeight: 900, color: "#3b1a45" }}>?</span>
-                  )}
-                </div>
-                <h3 style={{ margin: "12px 0 2px" }}>{it.name || "Untitled"}{it.symbol ? ` (${it.symbol})` : ""}</h3>
-                {l ? (
-                  <>
-                    <p className="sub" style={{ margin: "0 0 8px" }}>
-                      {l.minted.toString()} / {l.max.toString()} minted · {Number(l.price) / KELVIN} RIALO each
-                      {l.perw > 0n ? ` · max ${l.perw.toString()} per wallet` : ""}
-                    </p>
-                    <div style={{ height: 10, borderRadius: 6, background: "#eadff0", overflow: "hidden", marginBottom: 12 }}>
-                      <div style={{ width: pct + "%", height: "100%", background: "#3adfb4" }} />
-                    </div>
-                    {soldOut ? (
-                      <p className="fine" style={{ margin: 0 }}>Sold out</p>
-                    ) : (
-                      <Link href={`/mint?c=${it.id}&t=${l.treasury}`} className="btn mint" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
-                        Mint
-                      </Link>
-                    )}
-                  </>
-                ) : (
-                  <p className="fine" style={{ margin: 0 }}>Loading...</p>
-                )}
-              </div>
-            );
-          })}
+        <div style={{ display: "flex", gap: 8, margin: "4px 0 14px" }}>
+          <button type="button" style={tab(view === "col")} onClick={() => setView("col")}>Collections</button>
+          <button type="button" style={tab(view === "mine")} onClick={() => setView("mine")}>My NFTs</button>
         </div>
+
+        {view === "mine" ? (
+          <MyNfts />
+        ) : (
+          <>
+            <p className="sub">Collections launched on Rialo Studio</p>
+            {error && <div className="err">{error}</div>}
+            {!items && !error && <p className="fine">Loading collections...</p>}
+            {items && shown.length === 0 && <p className="fine">No collections yet.</p>}
+
+            <div style={{ display: "grid", gap: 16 }}>
+              {shown.map((it) => {
+                const l = live[it.id];
+                const pct = l && l.max > 0n ? Math.min(100, (Number(l.minted) * 100) / Number(l.max)) : 0;
+                const soldOut = !!l && l.minted >= l.max;
+                return (
+                  <div key={it.id} style={{ border: "3px solid #3b1a45", borderRadius: 20, padding: 14, background: "#fff" }}>
+                    <div style={{ width: "100%", aspectRatio: "1 / 1", borderRadius: 12, background: "linear-gradient(135deg,#b8a5ff,#ff9ecb)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                      {it.base ? (
+                        <img src={it.base} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                      ) : (
+                        <span style={{ fontSize: 80, fontWeight: 900, color: "#3b1a45" }}>?</span>
+                      )}
+                    </div>
+                    <h3 style={{ margin: "12px 0 2px" }}>{it.name || "Untitled"}{it.symbol ? ` (${it.symbol})` : ""}</h3>
+                    {l ? (
+                      <>
+                        <p className="sub" style={{ margin: "0 0 8px" }}>
+                          {l.minted.toString()} / {l.max.toString()} minted · {Number(l.price) / KELVIN} RIALO each
+                          {l.perw > 0n ? ` · max ${l.perw.toString()} per wallet` : ""}
+                        </p>
+                        <div style={{ height: 10, borderRadius: 6, background: "#eadff0", overflow: "hidden", marginBottom: 12 }}>
+                          <div style={{ width: pct + "%", height: "100%", background: "#3adfb4" }} />
+                        </div>
+                        {soldOut ? (
+                          <p className="fine" style={{ margin: 0 }}>Sold out</p>
+                        ) : (
+                          <Link href={`/mint?c=${it.id}&t=${l.treasury}`} className="btn mint" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
+                            Mint
+                          </Link>
+                        )}
+                      </>
+                    ) : (
+                      <p className="fine" style={{ margin: 0 }}>Loading...</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
