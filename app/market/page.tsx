@@ -5,6 +5,7 @@ import { loadCdk } from "../../lib/cdk";
 import { b58, KELVIN } from "../../lib/collection";
 import MyNfts from "./MyNfts";
 import Listings from "./Listings";
+import { HIDDEN } from "../../lib/hidden";
 
 type Item = { id: string; name: string; symbol: string; description: string; base: string };
 type Live = { price: bigint; max: bigint; minted: bigint; perw: bigint; treasury: string; end: bigint };
@@ -56,7 +57,7 @@ export default function MarketPage() {
     })();
   }, []);
 
-  const shown = (items || []).filter((it) => { const l = live[it.id]; return l !== null && !(l && l.end > 0n && BigInt(Math.floor(Date.now() / 1000)) > l.end); });
+  const shown = (items || []).filter((it) => !HIDDEN.includes(it.id)).filter((it) => { const l = live[it.id]; return l !== null && !(l && l.end > 0n && BigInt(Math.floor(Date.now() / 1000)) > l.end); });
 
   return (
     <div className="page">
