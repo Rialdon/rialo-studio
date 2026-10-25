@@ -34,7 +34,7 @@ const STEPS = [
 const FAQ = [
   { q: "Do I need to write code?", a: "No. Everything is a form: fill it in, approve in your wallet, done." },
   { q: "Which wallet do I need?", a: "The Rialo Wallet browser extension. Phones with a browser that supports extensions also work." },
-  { q: "Is this real money?", a: "No. Rialo Studio runs on Rialo Testnet only, with test tokens. It is not audited." },
+  { q: "Is this real money?", a: "No. Rialo Studio runs on Rialo Testnet only, with Rialo test tokens." },
 ];
 
 export default function Landing() {
