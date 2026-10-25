@@ -3,6 +3,7 @@
 import { useEffect, useState, CSSProperties } from "react";
 import { useRialoWallet } from "../providers";
 import { KELVIN } from "../../lib/collection";
+import * as L from "../../lib/collection";
 import {
   readListing,
   nftMeta,
@@ -38,6 +39,7 @@ export default function Listings() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
+  const [done, setDone] = useState<{ title: string; name: string; image: string; price: bigint; sig: string } | null>(null);
 
   async function load() {
     try {
@@ -85,13 +87,14 @@ export default function Listings() {
 
   async function act(row: Row, mine: boolean) {
     setBusy(row.mint);
+    let res: any;
     setError("");
 
     try {
       if (mine) {
-        await cancelListing(address!, row.mint, signAndSend);
+        res = await cancelListing(address!, row.mint, signAndSend);
       } else {
-        await buyNft(
+        res = await buyNft(
           address!,
           row.seller,
           row.mint,
@@ -107,6 +110,8 @@ export default function Listings() {
         );
       }
 
+      const sg = res && (L as any).sigOf ? (L as any).sigOf(res) : "";
+      setDone({ title: mine ? "Listing cancelled!" : "Purchase Successful!", name: row.name, image: row.image, price: row.price, sig: typeof sg === "string" ? sg : "" });
       await load();
     } catch (e: any) {
       setError(String(e?.message || e).slice(0, 300));
@@ -116,6 +121,23 @@ export default function Listings() {
   }
 
   return (
+    <>
+      {done && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 20, border: "3px solid #3b1a45", padding: 20, maxWidth: 380, width: "100%", maxHeight: "90vh", overflowY: "auto", textAlign: "center" }}>
+            <h3 style={{ margin: "0 0 12px" }}>{done.title}</h3>
+            {done.image ? <img src={done.image} alt="" style={{ width: "100%", borderRadius: 12 }} /> : null}
+            <p style={{ fontWeight: 800, margin: "8px 0 0" }}>{done.name}</p>
+            {done.title.startsWith("Purchase") ? <p style={{ fontSize: 12, margin: "2px 0 0" }}>Paid {Number(done.price) / KELVIN} RIALO</p> : null}
+            {done.sig && (L as any).EXPLORER ? (
+              <p style={{ fontSize: 11, margin: "4px 0 0" }}>
+                <a href={(L as any).EXPLORER + "/txs/" + done.sig} target="_blank" rel="noreferrer">View transaction</a>
+              </p>
+            ) : null}
+            <button className="btn" style={{ marginTop: 14 }} onClick={() => setDone(null)}>OK</button>
+          </div>
+        </div>
+      )}
     <div>
       <p className="sub">NFTs for sale</p>
 
@@ -210,5 +232,6 @@ export default function Listings() {
         })}
       </div>
     </div>
+    </>
   );
 }
