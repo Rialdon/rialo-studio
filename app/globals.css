@@ -44,7 +44,7 @@ h2 { margin: 0 0 4px; font-size: 22px; font-weight: 900; }
 /* ===== layar lebar: tablet, laptop, PC ===== */
 @media (min-width: 768px) {
   .page { max-width: 760px; padding: 28px 24px 56px; }
-  .topbar { max-width: 1200px; padding: 18px 16px; }
+  .topbar { max-width: 760px; padding: 18px 24px; }
   .brand { font-size: 24px; }
   .pill { font-size: 14px; padding: 8px 16px; }
   .screen { padding: 28px; border-radius: 32px; box-shadow: 7px 7px 0 var(--ink); }
@@ -68,6 +68,5 @@ h2 { margin: 0 0 4px; font-size: 22px; font-weight: 900; }
   .screen > img, .ok img { max-width: 420px !important; margin-left: auto; margin-right: auto; display: block; }
 }
 @media (min-width: 1400px) {
-  .page { max-width: 900px; }
-  .topbar { max-width: 1200px; }
+  .page, .topbar { max-width: 900px; }
 }
