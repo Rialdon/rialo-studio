@@ -178,7 +178,19 @@ export default function MintPage() {
       }
 
       add(`Sending ${qtyNum} mint(s) in ${txs.length} transaction(s)...`);
-      const sigs = await signAndSendMany(txs);
+      const sigs: any[] = [];
+      for (let gi = 0; gi < txs.length; gi++) {
+        add("Approve transaction " + (gi + 1) + "/" + txs.length + " in your wallet...");
+        const r = await signAndSendMany([txs[gi]]);
+        sigs.push(Array.isArray(r) ? r[0] : r);
+        const first = kps[groups[gi][0]];
+        let landed = false;
+        for (let i = 0; i < 12 && !landed; i++) {
+          await sleep(1500);
+          try { landed = !!(await client.getAccountInfo(first.publicKey)); } catch {}
+        }
+        if (!landed) throw new Error("Transaction " + (gi + 1) + " did not land on-chain. Nothing more was sent.");
+      }
       add("Wallet returned " + (Array.isArray(sigs) ? sigs.length + " result(s)" : typeof sigs));
       const sigOfNft: any[] = [];
       groups.forEach((g, gi) => g.forEach((n) => { sigOfNft[n] = sigs[gi]; }));
