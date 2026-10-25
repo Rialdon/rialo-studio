@@ -12,10 +12,10 @@ const replacer = (_k: string, v: any) => (typeof v === "bigint" ? v.toString() :
 
 export default function CreateToken() {
   const { address, isConnected, connect, signAndSend } = useRialoWallet();
-  const [name, setName] = useState("Candy Coin");
-  const [symbol, setSymbol] = useState("CANDY");
-  const [decimals, setDecimals] = useState("6");
-  const [supply, setSupply] = useState("1000000");
+  const [name, setName] = useState("");
+  const [symbol, setSymbol] = useState("");
+  const [decimals, setDecimals] = useState("");
+  const [supply, setSupply] = useState("");
   const [lock, setLock] = useState(false);
   const [busy, setBusy] = useState(false);
   const [log, setLog] = useState<string[]>([]);
@@ -33,6 +33,7 @@ export default function CreateToken() {
     setTxSig("");
     try {
       if (!name.trim() || !symbol.trim()) throw new Error("Name and symbol are required.");
+      if (!(parseFloat(supply) > 0)) throw new Error("Enter a supply greater than 0.");
       const { cdk, client } = await loadCdk();
       const P = (s: string) => cdk.PublicKey.fromString(s);
       const A = (k: any, w: boolean, s = false) => ({ pubkey: k, isSigner: s, isWritable: w });
@@ -40,7 +41,7 @@ export default function CreateToken() {
       const sys = typeof cdk.SYSTEM_PROGRAM_ID === "string" ? P(cdk.SYSTEM_PROGRAM_ID) : cdk.SYSTEM_PROGRAM_ID;
       const owner = P(address!);
       const mint = cdk.Keypair.generate();
-      const dec = Math.max(0, Math.min(9, parseInt(decimals, 10) || 0));
+      const dec = decimals.trim() === "" ? 6 : Math.max(0, Math.min(9, parseInt(decimals, 10) || 0));
       const units = BigInt(Math.round((parseFloat(supply) || 0) * 10 ** dec));
       add(`New mint: ${mint.publicKey.toString()}`);
 
@@ -121,10 +122,10 @@ export default function CreateToken() {
         <p className="sub">Makes a Token-2022 token with a name and symbol.</p>
 
         <div className="two">
-          <div className="f"><label>Name</label><input className="in" value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div className="f"><label>Symbol</label><input className="in" value={symbol} onChange={(e) => setSymbol(e.target.value)} /></div>
-          <div className="f"><label>Decimals</label><input className="in" inputMode="numeric" value={decimals} onChange={(e) => setDecimals(e.target.value)} /></div>
-          <div className="f"><label>Supply</label><input className="in" inputMode="decimal" value={supply} onChange={(e) => setSupply(e.target.value)} /></div>
+          <div className="f"><label>Name</label><input className="in" placeholder="Candy Coin" value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div className="f"><label>Symbol</label><input className="in" placeholder="CANDY" value={symbol} onChange={(e) => setSymbol(e.target.value)} /></div>
+          <div className="f"><label>Decimals</label><input className="in" inputMode="numeric" placeholder="6" value={decimals} onChange={(e) => setDecimals(e.target.value)} /></div>
+          <div className="f"><label>Supply</label><input className="in" inputMode="decimal" placeholder="1000000" value={supply} onChange={(e) => setSupply(e.target.value)} /></div>
         </div>
 
         <div className="toggle" onClick={() => setLock((v) => !v)}>
@@ -136,7 +137,7 @@ export default function CreateToken() {
           <div className="ico">{(symbol || "?").slice(0, 1).toUpperCase()}</div>
           <div>
             <b style={{ fontSize: 15 }}>{name || "Token name"}</b>
-            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.7 }}>{supply || "0"} {symbol.toUpperCase()} · {decimals || "0"} decimals</div>
+            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.7 }}>{supply || "0"} {symbol.toUpperCase()} · {decimals || "6"} decimals</div>
           </div>
         </div>
 

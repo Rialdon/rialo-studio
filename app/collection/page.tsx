@@ -19,18 +19,18 @@ const toSec = (v: string) => (v ? Math.floor(new Date(v).getTime() / 1000) : 0);
 
 export default function LaunchCollection() {
   const { address, isConnected, connect, signAndSend } = useRialoWallet();
-  const [name, setName] = useState("My Collection");
-  const [symbol, setSymbol] = useState("MCOL");
+  const [name, setName] = useState("");
+  const [symbol, setSymbol] = useState("");
   const [desc, setDesc] = useState("");
-  const [price, setPrice] = useState("0.1");
-  const [perWallet, setPerWallet] = useState("0");
-  const [supply, setSupply] = useState("100");
+  const [price, setPrice] = useState("");
+  const [perWallet, setPerWallet] = useState("");
+  const [supply, setSupply] = useState("");
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
   const [base, setBase] = useState<File | null>(null);
   const [bgW, setBgW] = useState<string[]>(BG.map((b) => String(b.weight)));
   const [tintW, setTintW] = useState<string[]>(TINT.map((t) => String(t.weight)));
-  const [accCat, setAccCat] = useState("Hat");
+  const [accCat, setAccCat] = useState("");
   const [accFiles, setAccFiles] = useState<File[]>([]);
   const [accW, setAccW] = useState<string[]>([]);
   const [noneW, setNoneW] = useState("50");
@@ -66,6 +66,7 @@ export default function LaunchCollection() {
       if (enc.encode(name.trim()).length > 24) throw new Error("Name max 24 characters.");
       if (enc.encode(symbol.trim()).length > 16) throw new Error("Symbol max 16 characters.");
       if (supplyN < 1) throw new Error("Supply must be at least 1.");
+      if (price.trim() === "") throw new Error("Enter a price (0 for free).");
       if (toSec(endAt) && toSec(endAt) <= Math.floor(Date.now() / 1000)) throw new Error("End time must be in the future.");
       if (toSec(startAt) && toSec(endAt) && toSec(endAt) <= toSec(startAt)) throw new Error("End must be after start.");
       if (!base) throw new Error("Pick the base image (PNG).");
@@ -151,17 +152,17 @@ export default function LaunchCollection() {
         <p className="sub">Generative NFTs with rarity. Traits stay hidden until each NFT is minted.</p>
 
         <div className="two">
-          <div className="f"><label>Name</label><input className="in" value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div className="f"><label>Symbol</label><input className="in" value={symbol} onChange={(e) => setSymbol(e.target.value)} /></div>
-          <div className="f"><label>Price (RIALO)</label><input className="in" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} /></div>
-          <div className="f"><label>Supply</label><input className="in" inputMode="numeric" value={supply} onChange={(e) => setSupply(e.target.value)} /></div>
-          <div className="f"><label>Max per wallet (0 = unlimited)</label><input className="in" inputMode="numeric" value={perWallet} onChange={(e) => setPerWallet(e.target.value)} /></div>
+          <div className="f"><label>Name</label><input className="in" placeholder="My Collection" value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div className="f"><label>Symbol</label><input className="in" placeholder="MCOL" value={symbol} onChange={(e) => setSymbol(e.target.value)} /></div>
+          <div className="f"><label>Price (RIALO)</label><input className="in" inputMode="decimal" placeholder="0.1" value={price} onChange={(e) => setPrice(e.target.value)} /></div>
+          <div className="f"><label>Supply</label><input className="in" inputMode="numeric" placeholder="100" value={supply} onChange={(e) => setSupply(e.target.value)} /></div>
+          <div className="f"><label>Max per wallet (0 = unlimited)</label><input className="in" inputMode="numeric" placeholder="0 = unlimited" value={perWallet} onChange={(e) => setPerWallet(e.target.value)} /></div>
         </div>
         <div className="two">
           <div className="f"><label>Start (optional)</label><input className="in" type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} /></div>
           <div className="f"><label>End (optional)</label><input className="in" type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} /></div>
         </div>
-        <div className="f"><label>Description</label><input className="in" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+        <div className="f"><label>Description</label><input className="in" placeholder="Short description" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
 
         <div className="f">
           <label>Base image (PNG, transparent)</label>
@@ -189,7 +190,7 @@ export default function LaunchCollection() {
         </div>
 
         <p className="sub">Optional accessories (PNG, same size as base)</p>
-        <div className="f"><label>Category name</label><input className="in" value={accCat} onChange={(e) => setAccCat(e.target.value)} /></div>
+        <div className="f"><label>Category name</label><input className="in" placeholder="Hat" value={accCat} onChange={(e) => setAccCat(e.target.value)} /></div>
         <div className="f">
           <label>{accCat || "Accessory"} images ({accFiles.length} selected)</label>
           <input

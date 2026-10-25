@@ -12,8 +12,8 @@ const replacer = (_k: string, v: any) => (typeof v === "bigint" ? v.toString() :
 
 export default function CreateNft() {
   const { address, isConnected, connect, signAndSend } = useRialoWallet();
-  const [name, setName] = useState("My First NFT");
-  const [symbol, setSymbol] = useState("MNFT");
+  const [name, setName] = useState("");
+  const [symbol, setSymbol] = useState("");
   const [desc, setDesc] = useState("");
   const [image, setImage] = useState("");
   const [lock, setLock] = useState(true);
@@ -160,10 +160,10 @@ export default function CreateNft() {
         <p className="sub">Mints one Token-2022 NFT (supply 1, 0 decimals) with on-chain metadata.</p>
 
         <div className="two">
-          <div className="f"><label>Name</label><input className="in" value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div className="f"><label>Symbol</label><input className="in" value={symbol} onChange={(e) => setSymbol(e.target.value)} /></div>
+          <div className="f"><label>Name</label><input className="in" placeholder="My First NFT" value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div className="f"><label>Symbol</label><input className="in" placeholder="MNFT" value={symbol} onChange={(e) => setSymbol(e.target.value)} /></div>
         </div>
-        <div className="f"><label>Description</label><input className="in" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+        <div className="f"><label>Description</label><input className="in" placeholder="Short description" value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
         <div className="f"><label>Image</label><input className="in" type="file" accept="image/*" onChange={pick} />{uploading && <small>Uploading...</small>}</div>
 
         <div className="toggle" onClick={() => setLock((v) => !v)}>
