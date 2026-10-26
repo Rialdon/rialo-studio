@@ -91,6 +91,7 @@ export default function Collections() {
                 )}
               </div>
               <h3 style={{ margin: "12px 0 2px" }}>{it.name || "Untitled"}{it.symbol ? ` (${it.symbol})` : ""}</h3>
+              {it.description ? <p className="sub" style={{ margin: "0 0 8px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{it.description}</p> : null}
               {l ? (
                 <>
                   <p className="sub" style={{ margin: "0 0 4px" }}>
