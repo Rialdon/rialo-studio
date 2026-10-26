@@ -21,7 +21,7 @@ export default function Home() {
           <Link href="/collection" className="tile" style={{ background: "#ffe3ef" }}>
             <div className="ico">N</div>
             <b>Launch collection</b>
-            <small>Each image = one NFT</small>
+            <small>Generative, with rarity</small>
           </Link>
           <Link href="/market" className="tile" style={{ background: "#e3fbf3" }}>
             <div className="ico">$</div>
